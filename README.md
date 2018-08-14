@@ -18,6 +18,11 @@ dee.on('die', async (data) => {
 
 ```
 
+## Dependencies
+ - Docker CLI
+ - Script Shell Utility
+ 
+As this module calls out to the command line to feed in docker events, these two dependencies are required to be in the environment where this module is called. 
 
 ## Data Schema
 The data coming from the event emitter is the full JSON formatted docker event. According to the docker engine API reference it looks like the below. The field that the emitter matches on is the 'Action' field.
