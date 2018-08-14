@@ -1,6 +1,8 @@
 import { EventEmitter } from 'events';
-import log from 'llog';
+import debug from 'debug';
 import { spawn } from 'child_process';
+
+const log = debug('docker-events');
 
 class DockerEventEmitter extends EventEmitter {
   constructor() {
@@ -13,7 +15,7 @@ class DockerEventEmitter extends EventEmitter {
   }
 
   _spawnDockerEvents() {
-    log.info('spawning docker events');
+    log('spawning docker events');
 
     this.cmd = spawn(
       'script -F | docker events --format \'{{json .}}\'',
@@ -23,7 +25,7 @@ class DockerEventEmitter extends EventEmitter {
     this.cmd.stdout.setEncoding('utf8');
 
     this.cmd.on('error', (err) => {
-      log.error(`failed to start command, error: ${err}`);
+      log(`failed to start command, error: ${err}`);
       this.emit('error', err);
     });
 
@@ -48,6 +50,7 @@ class DockerEventEmitter extends EventEmitter {
         this.data = '';
         const eventType = json.Action;
 
+        log('emitting docker-event %j', json);
         this.emit(eventType, json);
       } catch (err) {
         log.error(err, data);

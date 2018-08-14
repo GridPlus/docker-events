@@ -68,3 +68,4 @@ jest_0
 support/notary/notary_trust/
 .data
 .vscode
+typescript
