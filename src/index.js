@@ -10,11 +10,9 @@ class DockerEventEmitter extends EventEmitter {
 
     this.cmd = null;
     this.data = '';
-
-    this._spawnDockerEvents();
   }
 
-  _spawnDockerEvents() {
+  listen() {
     log('spawning docker events');
 
     this.cmd = spawn(
@@ -31,7 +29,6 @@ class DockerEventEmitter extends EventEmitter {
 
     this.cmd.stdout.on('data', data => this._tryParseStdoutData(data));
   }
-
 
   _tryParseStdoutData(data) {
     if (!data) return;
@@ -59,6 +56,5 @@ class DockerEventEmitter extends EventEmitter {
     }
   }
 }
-
 
 export default new DockerEventEmitter();
