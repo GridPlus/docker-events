@@ -1,6 +1,6 @@
 {
   "name": "@gridplus/docker-events",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Enables the consumption of docker events as a node event emitter",
   "main": "dist/index.js",
   "files": [
