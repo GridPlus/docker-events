@@ -61,7 +61,7 @@ typings/
 
 .DS_Store
 .config
-dist
+#dist
 jest_0
 .queuesbrokerdb
 
