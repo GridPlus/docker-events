@@ -12,6 +12,11 @@ class DockerEventEmitter extends EventEmitter {
     this.data = '';
   }
 
+  emit(type, ...args) {
+    super.emit('*', ...args);
+    return super.emit(type, ...args) || super.emit('', ...args);
+  }
+
   listen() {
     log('spawning docker events');
 
@@ -50,7 +55,7 @@ class DockerEventEmitter extends EventEmitter {
         log('emitting docker-event %j', json);
         this.emit(eventType, json);
       } catch (err) {
-        log.error(err, data);
+        log(err, data);
         /* no op */
       }
     }
