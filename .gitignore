@@ -69,3 +69,5 @@ support/notary/notary_trust/
 .data
 .vscode
 typescript
+
+dist

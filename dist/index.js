@@ -1,74 +1,78 @@
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
+"use strict";Object.defineProperty(exports, "__esModule", {value: true}); function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }// src/index.ts
+var _fs = require('fs');
 var _events = require('events');
-
-var _debug = require('debug');
-
-var _debug2 = _interopRequireDefault(_debug);
-
 var _child_process = require('child_process');
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const log = (0, _debug2.default)('docker-events');
-
-class DockerEventEmitter extends _events.EventEmitter {
+var _debug = require('debug'); var _debug2 = _interopRequireDefault(_debug);
+var log = _debug2.default.call(void 0, "docker-events");
+var DockerEventEmitter = class extends _events.EventEmitter {
   constructor() {
     super();
-
     this.cmd = null;
-    this.data = '';
+    this.data = "";
   }
-
   emit(type, ...args) {
-    super.emit('*', ...args);
-    return super.emit(type, ...args) || super.emit('', ...args);
+    super.emit("*", ...args);
+    return super.emit(type, ...args) || super.emit("", ...args);
   }
-
+  cleanup() {
+    if (this.cmd) {
+      if (this.cmd.killed)
+        return;
+      this.cmd.kill();
+    }
+  }
   listen() {
-    log('spawning docker events');
-
-    this.cmd = (0, _child_process.spawn)('script -F | docker events --format \'{{json .}}\'', { shell: true });
-
-    this.cmd.stdout.setEncoding('utf8');
-
-    this.cmd.on('error', err => {
-      log(`failed to start command, error: ${err}`);
-      this.emit('error', err);
+    this.cleanup();
+    if (!this.watcher) {
+      this.watcher = _fs.watch.call(void 0, "/var/run", (event, filename) => {
+        if (event !== "rename")
+          return;
+        if (filename !== "docker.sock" && filename !== "dockerd.pid")
+          return;
+        if (this.lastSeen === "docker.sock" && filename === "dockerd.pid") {
+          this.cleanup();
+        }
+        if (this.lastSeen === "dockerd.pid" && filename === "docker.sock") {
+          this.listen();
+        }
+        this.lastSeen = filename;
+      });
+    }
+    log("spawning docker events");
+    this.cmd = _child_process.spawn.call(void 0, "docker events --format '{{json .}}'", { shell: true });
+    process.on("exit", () => {
+      this.cmd.kill();
     });
-
-    this.cmd.stdout.on('data', data => this._tryParseStdoutData(data));
+    this.cmd.stdout.setEncoding("utf8");
+    this.cmd.on("error", (error) => {
+      log("failed to start command, error: %s", error);
+      this.emit("error", error);
+    });
+    this.cmd.stdout.on("data", (data) => this._tryParseStdoutData(data));
   }
-
   _tryParseStdoutData(data) {
-    if (!data) return;
-    /* If there is a newline, assume this is multiple JSON lines,
-    separate them, and try to parse them individually
-    */
+    if (!data)
+      return;
     const strings = data.split(/\n/);
     if (strings.length > 1) {
-      strings.forEach(str => {
+      strings.forEach((str) => {
         this._tryParseStdoutData(str);
       });
     } else {
       this.data = `${this.data}${data.toString()}`;
       try {
         const json = JSON.parse(this.data);
-        this.data = '';
+        this.data = "";
         const eventType = json.Action;
-
-        log('emitting docker-event %j', json);
+        log("emitting docker-event %j", json);
         this.emit(eventType, json);
       } catch (err) {
         log(err, data);
-        /* no op */
       }
     }
   }
-}
+};
+var src_default = new DockerEventEmitter();
 
-exports.default = new DockerEventEmitter();
+
+exports.default = src_default;
